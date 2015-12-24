@@ -49,8 +49,8 @@ import org.apache.spark.network.util.TransportConf;
 public class ExternalShuffleIntegrationSuite {
 
   static String APP_ID = "app-id";
-  static String SORT_MANAGER = "org.apache.spark.shuffle.sort.SortShuffleManager";
-  static String HASH_MANAGER = "org.apache.spark.shuffle.hash.HashShuffleManager";
+  static String SORT_MANAGER = "sort";
+  static String HASH_MANAGER = "hash";
 
   // Executor 0 is sort-based
   static TestShuffleDataContext dataContext0;
@@ -91,8 +91,8 @@ public class ExternalShuffleIntegrationSuite {
     dataContext1.create();
     dataContext1.insertHashShuffleData(1, 0, exec1Blocks);
 
-    conf = new TransportConf(new SystemPropertyConfigProvider());
-    handler = new ExternalShuffleBlockHandler(conf);
+    conf = new TransportConf("shuffle", new SystemPropertyConfigProvider());
+    handler = new ExternalShuffleBlockHandler(conf, null);
     TransportContext transportContext = new TransportContext(conf, handler);
     server = transportContext.createServer();
   }
@@ -136,7 +136,7 @@ public class ExternalShuffleIntegrationSuite {
 
     final Semaphore requestsRemaining = new Semaphore(0);
 
-    ExternalShuffleClient client = new ExternalShuffleClient(conf, null, false);
+    ExternalShuffleClient client = new ExternalShuffleClient(conf, null, false, false);
     client.init(APP_ID);
     client.fetchBlocks(TestUtils.getLocalHost(), port, execId, blockIds,
       new BlockFetchingListener() {
@@ -274,7 +274,7 @@ public class ExternalShuffleIntegrationSuite {
 
   private void registerExecutor(String executorId, ExecutorShuffleInfo executorInfo)
       throws IOException {
-    ExternalShuffleClient client = new ExternalShuffleClient(conf, null, false);
+    ExternalShuffleClient client = new ExternalShuffleClient(conf, null, false, false);
     client.init(APP_ID);
     client.registerWithShuffleServer(TestUtils.getLocalHost(), server.getPort(),
       executorId, executorInfo);

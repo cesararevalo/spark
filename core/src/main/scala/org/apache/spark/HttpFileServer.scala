@@ -50,8 +50,8 @@ private[spark] class HttpFileServer(
 
   def stop() {
     httpServer.stop()
-    
-    // If we only stop sc, but the driver process still run as a services then we need to delete 
+
+    // If we only stop sc, but the driver process still run as a services then we need to delete
     // the tmp dir, if not, it will create too many tmp dirs
     try {
       Utils.deleteRecursively(baseDir)
@@ -63,12 +63,17 @@ private[spark] class HttpFileServer(
 
   def addFile(file: File) : String = {
     addFileToDir(file, fileDir)
-    serverUri + "/files/" + file.getName
+    serverUri + "/files/" + Utils.encodeFileNameToURIRawPath(file.getName)
   }
 
   def addJar(file: File) : String = {
     addFileToDir(file, jarDir)
-    serverUri + "/jars/" + file.getName
+    serverUri + "/jars/" + Utils.encodeFileNameToURIRawPath(file.getName)
+  }
+
+  def addDirectory(path: String, resourceBase: String): String = {
+    httpServer.addDirectory(path, resourceBase)
+    serverUri + path
   }
 
   def addFileToDir(file: File, dir: File) : String = {
@@ -80,7 +85,7 @@ private[spark] class HttpFileServer(
       throw new IllegalArgumentException(s"$file cannot be a directory.")
     }
     Files.copy(file, new File(dir, file.getName))
-    dir + "/" + file.getName
+    dir + "/" + Utils.encodeFileNameToURIRawPath(file.getName)
   }
 
 }
